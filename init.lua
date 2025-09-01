@@ -1,5 +1,5 @@
 -- DogV5 - Premium BedWars Utility
--- Loadstring: loadstring(game:HttpGet('https://raw.githubusercontent.com/yourusername/DogV5/main/init.lua', true))()
+-- Loadstring: loadstring(game:HttpGet('https://raw.githubusercontent.com/youkofrfrfr/DogV5/main/init.lua', true))()
 
 local DogV5 = {Loaded = false, Version = "v1.0"}
 local Players = game:GetService("Players")
@@ -7,7 +7,6 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
-local Mouse = LocalPlayer:GetMouse()
 
 -- UI Library
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
@@ -229,7 +228,7 @@ RunService.Heartbeat:Connect(function()
                         local distance = (humanoidRootPart.Position - targetRoot.Position).Magnitude
                         
                         if distance <= KillAuraRange then
-                            -- Simulate attack (this would need actual combat logic for your specific game)
+                            -- Simulate attack
                             humanoidRootPart.CFrame = targetRoot.CFrame
                         end
                     end
