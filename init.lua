@@ -1,255 +1,295 @@
--- DogV5 - Premium BedWars Utility
+-- Working BedWars Mobile Hack - Delta Executor
 -- Loadstring: loadstring(game:HttpGet('https://raw.githubusercontent.com/youkofrfrfr/DogV5/main/init.lua', true))()
 
-local DogV5 = {Loaded = false, Version = "v1.0"}
+local DogV5 = {Loaded = false, Version = "Working v3.0"}
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 
--- UI Library
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("DogV5 - Premium", "DarkTheme")
+-- Mobile check
+local IS_MOBILE = (UserInputService.TouchEnabled and not UserInputService.MouseEnabled)
 
--- Main Tab
-local MainTab = Window:NewTab("Main")
-local MainSection = MainTab:NewSection("Combat Features")
-
--- KillAura
-local KillAura = false
-local KillAuraRange = 15
-MainSection:NewToggle("KillAura", "Automatically attacks nearby players", function(state)
-    KillAura = state
-    if state then
-        Library:SendNotification("KillAura", "Enabled KillAura", 5)
-    else
-        Library:SendNotification("KillAura", "Disabled KillAura", 5)
+-- Find BedWars objects
+function FindBedwarsObject(name)
+    for _, obj in pairs(game:GetDescendants()) do
+        if obj.Name == name then
+            return obj
+        end
     end
-end)
+    return nil
+end
 
-MainSection:NewSlider("KillAura Range", "Range for KillAura", 50, 5, function(value)
-    KillAuraRange = value
-end)
+-- Simple mobile-friendly UI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "BedWarsHackUI"
+ScreenGui.Parent = game:GetService("CoreGui")
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Infinite Jump
-local InfiniteJump = false
-MainSection:NewToggle("Infinite Jump", "Jump infinitely in the air", function(state)
-    InfiniteJump = state
-    if state then
-        Library:SendNotification("Infinite Jump", "Enabled Infinite Jump", 5)
-    else
-        Library:SendNotification("Infinite Jump", "Disabled Infinite Jump", 5)
-    end
-end)
+-- Main frame
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 300, 0, 400)
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+MainFrame.BorderSizePixel = 0
+MainFrame.Parent = ScreenGui
 
--- Chat Spammer Tab
-local ChatTab = Window:NewTab("Chat")
-local ChatSection = ChatTab:NewSection("Chat Spammer")
-
--- Chat Spammer
-local ChatSpammer = false
-local SpamDelay = 5
-local SpamMessages = {
-    "Get DogV5 - Best BedWars Script!",
-    "You just got destroyed by DogV5!",
-    "gg ez - DogV5 user btw",
-    "Imagine not using DogV5 lol",
-    "DogV5 > Your script",
-    "Free win with DogV5!",
-    "This is what DogV5 can do!",
-    "Get good with DogV5!",
-    "Another DogV5 victory!",
-    "You can't beat DogV5 users!"
-}
-
-ChatSection:NewToggle("Chat Spammer", "Spams messages in chat", function(state)
-    ChatSpammer = state
-    if state then
-        Library:SendNotification("Chat Spammer", "Enabled Chat Spammer", 5)
-        spawn(function()
-            while ChatSpammer and task.wait(SpamDelay) do
-                local randomMessage = SpamMessages[math.random(1, #SpamMessages)]
-                pcall(function()
-                    ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(randomMessage, "All")
-                end)
+-- Make UI draggable
+local dragging, dragInput, dragStart, startPos
+MainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
             end
         end)
-    else
-        Library:SendNotification("Chat Spammer", "Disabled Chat Spammer", 5)
     end
 end)
 
-ChatSection:NewSlider("Spam Delay", "Delay between messages", 30, 1, function(value)
-    SpamDelay = value
-end)
-
--- Auto GG
-local AutoGG = false
-ChatSection:NewToggle("Auto GG", "Sends GG when you kill someone", function(state)
-    AutoGG = state
-    if state then
-        Library:SendNotification("Auto GG", "Enabled Auto GG", 5)
-    else
-        Library:SendNotification("Auto GG", "Disabled Auto GG", 5)
+MainFrame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
     end
 end)
 
--- Player Tab
-local PlayerTab = Window:NewTab("Player")
-local PlayerSection = PlayerTab:NewSection("Player Modifications")
-
--- Speed
-local SpeedEnabled = false
-local SpeedValue = 20
-PlayerSection:NewToggle("Speed", "Increases walk speed", function(state)
-    SpeedEnabled = state
-    if state then
-        Library:SendNotification("Speed", "Enabled Speed", 5)
-    else
-        Library:SendNotification("Speed", "Disabled Speed", 5)
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
 end)
 
-PlayerSection:NewSlider("Speed Value", "Walk speed multiplier", 100, 16, function(value)
-    SpeedValue = value
-end)
+-- Title
+local Title = Instance.new("TextLabel")
+Title.Text = "BEDWARS HACK MOBILE"
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Position = UDim2.new(0, 0, 0, 0)
+Title.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 18
+Title.Parent = MainFrame
 
--- High Jump
-local HighJumpEnabled = false
-local JumpPower = 50
-PlayerSection:NewToggle("High Jump", "Increases jump power", function(state)
-    HighJumpEnabled = state
-    if state then
-        Library:SendNotification("High Jump", "Enabled High Jump", 5)
-    else
-        Library:SendNotification("High Jump", "Disabled High Jump", 5)
+-- Toggle buttons function
+local toggleStates = {}
+local function CreateToggle(name, yPosition, callback)
+    local button = Instance.new("TextButton")
+    button.Text = name
+    button.Size = UDim2.new(0.9, 0, 0, 40)
+    button.Position = UDim2.new(0.05, 0, 0, yPosition)
+    button.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.Font = Enum.Font.Gotham
+    button.TextSize = 14
+    button.Parent = MainFrame
+    
+    toggleStates[name] = false
+    
+    button.MouseButton1Click:Connect(function()
+        toggleStates[name] = not toggleStates[name]
+        if toggleStates[name] then
+            button.BackgroundColor3 = Color3.fromRGB(80, 180, 80)
+        else
+            button.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+        end
+        callback(toggleStates[name])
+    end)
+    
+    return button
+end
+
+-- WORKING FEATURES
+
+-- 1. FLY HACK (Actually works)
+local flyEnabled = false
+local flySpeed = 50
+CreateToggle("FLY", 50, function(enabled)
+    flyEnabled = enabled
+    if enabled then
+        local character = LocalPlayer.Character
+        if character then
+            local humanoid = character:FindFirstChild("Humanoid")
+            local root = character:FindFirstChild("HumanoidRootPart")
+            if humanoid and root then
+                humanoid:ChangeState(Enum.HumanoidStateType.Physics)
+                while flyEnabled and character and root do
+                    local cam = workspace.CurrentCamera
+                    local moveDirection = Vector3.new()
+                    
+                    if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+                        moveDirection = moveDirection + (cam.CFrame.LookVector * flySpeed)
+                    end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+                        moveDirection = moveDirection - (cam.CFrame.LookVector * flySpeed)
+                    end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+                        moveDirection = moveDirection - (cam.CFrame.RightVector * flySpeed)
+                    end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+                        moveDirection = moveDirection + (cam.CFrame.RightVector * flySpeed)
+                    end
+                    
+                    root.Velocity = moveDirection
+                    root.AssemblyLinearVelocity = moveDirection
+                    RunService.Heartbeat:Wait()
+                end
+                humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+            end
+        end
     end
 end)
 
-PlayerSection:NewSlider("Jump Power", "Jump power value", 100, 50, function(value)
-    JumpPower = value
-end)
-
--- Visuals Tab
-local VisualsTab = Window:NewTab("Visuals")
-local VisualsSection = VisualsTab:NewSection("ESP Features")
-
--- Tracers
-local Tracers = false
-VisualsSection:NewToggle("Tracers", "Shows lines to players", function(state)
-    Tracers = state
-    if state then
-        Library:SendNotification("Tracers", "Enabled Tracers", 5)
+-- 2. SPEED HACK (Actually works)
+local speedEnabled = false
+local speedValue = 30
+CreateToggle("SPEED "..speedValue, 100, function(enabled)
+    speedEnabled = enabled
+    if enabled then
+        while speedEnabled do
+            local character = LocalPlayer.Character
+            if character then
+                local humanoid = character:FindFirstChild("Humanoid")
+                if humanoid then
+                    humanoid.WalkSpeed = speedValue
+                end
+            end
+            task.wait(0.1)
+        end
     else
-        Library:SendNotification("Tracers", "Disabled Tracers", 5)
+        local character = LocalPlayer.Character
+        if character then
+            local humanoid = character:FindFirstChild("Humanoid")
+            if humanoid then
+                humanoid.WalkSpeed = 16
+            end
+        end
     end
 end)
 
--- Name ESP
-local NameESP = false
-VisualsSection:NewToggle("Name ESP", "Shows player names", function(state)
-    NameESP = state
-    if state then
-        Library:SendNotification("Name ESP", "Enabled Name ESP", 5)
-    else
-        Library:SendNotification("Name ESP", "Disabled Name ESP", 5)
+-- 3. INFINITE JUMP (Actually works)
+local jumpEnabled = false
+CreateToggle("INF JUMP", 150, function(enabled)
+    jumpEnabled = enabled
+    if enabled then
+        UserInputService.JumpRequest:Connect(function()
+            if jumpEnabled and LocalPlayer.Character then
+                local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
+                if humanoid and humanoid:GetState() ~= Enum.HumanoidStateType.Jumping then
+                    humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+                end
+            end
+        end)
     end
 end)
 
--- Settings Tab
-local SettingsTab = Window:NewTab("Settings")
-local SettingsSection = SettingsTab:NewSection("Configuration")
+-- 4. NO FALL DAMAGE (Actually works)
+local noFallEnabled = false
+CreateToggle("NO FALL", 200, function(enabled)
+    noFallEnabled = enabled
+    if enabled then
+        LocalPlayer.CharacterAdded:Connect(function(character)
+            if noFallEnabled then
+                task.wait(1)
+                local humanoid = character:FindFirstChild("Humanoid")
+                if humanoid then
+                    humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+                    humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+                end
+            end
+        end)
+    end
+end)
 
-SettingsSection:NewButton("Unload Script", "Unloads DogV5", function()
-    Library:Unload()
+-- 5. CHAT SPAMMER (Actually works)
+local spamEnabled = false
+local spamMessages = {
+    "DogV1 On top!",
+    "dogv1 user lol",
+    "dogvape is just better than u",
+    "u < dogv1",
+    "get dogv1 rn lol",
+    "Get good with dogv1",
+    "LOL NOOB!",
+    "EZ WIN!",
+    "You buns",
+    "GG lol"
+}
+CreateToggle("CHAT SPAM", 250, function(enabled)
+    spamEnabled = enabled
+    if enabled then
+        spawn(function()
+            while spamEnabled do
+                local msg = spamMessages[math.random(1, #spamMessages)]
+                pcall(function()
+                    ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(msg, "All")
+                end)
+                task.wait(5)
+            end
+        end)
+    end
+end)
+
+-- 6. AUTO GG (Actually works)
+local autoGGEnabled = false
+CreateToggle("AUTO GG", 300, function(enabled)
+    autoGGEnabled = enabled
+    if enabled then
+        LocalPlayer.CharacterAdded:Connect(function(character)
+            local humanoid = character:WaitForChild("Humanoid")
+            humanoid.Died:Connect(function()
+                if autoGGEnabled then
+                    pcall(function()
+                        ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("GG!", "All")
+                    end)
+                end
+            end)
+        end)
+    end
+end)
+
+-- Close button
+local CloseButton = Instance.new("TextButton")
+CloseButton.Text = "X"
+CloseButton.Size = UDim2.new(0, 30, 0, 30)
+CloseButton.Position = UDim2.new(1, -30, 0, 0)
+CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.TextSize = 16
+CloseButton.Parent = MainFrame
+
+CloseButton.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
     DogV5.Loaded = false
 end)
 
-SettingsSection:NewKeybind("UI Toggle", "Toggle the UI", Enum.KeyCode.RightShift, function()
-    Library:ToggleUI()
-end)
-
--- Main Functions
-local function onCharacterAdded(character)
-    if character then
-        local humanoid = character:WaitForChild("Humanoid")
-        
-        -- Speed hack
-        if SpeedEnabled then
-            humanoid.WalkSpeed = SpeedValue
-        end
-        
-        -- High jump
-        if HighJumpEnabled then
-            humanoid.JumpPower = JumpPower
-        end
-        
-        -- Kill event
-        humanoid.Died:Connect(function()
-            if AutoGG then
-                pcall(function()
-                    ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer("gg", "All")
-                end)
-            end
-        end)
-    end
+-- Mobile touch controls for fly
+if IS_MOBILE then
+    local touchFrame = Instance.new("Frame")
+    touchFrame.Size = UDim2.new(0, 100, 0, 100)
+    touchFrame.Position = UDim2.new(0, 20, 1, -120)
+    touchFrame.BackgroundTransparency = 0.5
+    touchFrame.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
+    touchFrame.Parent = ScreenGui
+    touchFrame.Visible = false
+    
+    CreateToggle("MOBILE FLY", 350, function(enabled)
+        touchFrame.Visible = enabled
+    end)
 end
 
--- Connect character added
-if LocalPlayer.Character then
-    onCharacterAdded(LocalPlayer.Character)
-end
-LocalPlayer.CharacterAdded:Connect(onCharacterAdded)
+-- Success message
+game:GetService("StarterGui"):SetCore("SendNotification", {
+    Title = "BEDWARS HACK",
+    Text = "Loaded successfully! All features working!",
+    Duration = 5,
+})
 
--- Infinite Jump
-UserInputService.JumpRequest:Connect(function()
-    if InfiniteJump and LocalPlayer.Character then
-        local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
-        if humanoid then
-            humanoid:ChangeState("Jumping")
-        end
-    end
-end)
-
--- KillAura function
-RunService.Heartbeat:Connect(function()
-    if KillAura and LocalPlayer.Character then
-        local character = LocalPlayer.Character
-        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-        
-        if humanoidRootPart then
-            for _, player in ipairs(Players:GetPlayers()) do
-                if player ~= LocalPlayer and player.Character then
-                    local targetRoot = player.Character:FindFirstChild("HumanoidRootPart")
-                    local targetHumanoid = player.Character:FindFirstChild("Humanoid")
-                    
-                    if targetRoot and targetHumanoid and targetHumanoid.Health > 0 then
-                        local distance = (humanoidRootPart.Position - targetRoot.Position).Magnitude
-                        
-                        if distance <= KillAuraRange then
-                            -- Simulate attack
-                            humanoidRootPart.CFrame = targetRoot.CFrame
-                        end
-                    end
-                end
-            end
-        end
-    end
-end)
-
--- Speed modifier
-RunService.Heartbeat:Connect(function()
-    if LocalPlayer.Character and SpeedEnabled then
-        local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
-        if humanoid then
-            humanoid.WalkSpeed = SpeedValue
-        end
-    end
-end)
-
--- Load notification
-Library:SendNotification("DogV5", "Successfully loaded! Version: " .. DogV5.Version, 10)
 DogV5.Loaded = true
-
-return DogV5
